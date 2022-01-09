@@ -3,6 +3,7 @@ Adam Pachur,
 s185615
 
 Temat gry: Statek kosmiczny
+
 Cel gry: Jak najdłuższe przeżycie ataków przeciwników
 
 Opis: Za pomocą klawiszy WASD sterujesz statkiem kosmiczny starając się omijać wrogów oraz inny przeszkód. Za pomocą lewego przycisku myszy możesz strzelać pociskami,
