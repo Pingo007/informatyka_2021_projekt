@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Menu.h"
+#include "DifficultyMenu.h"
 #include <SFML/Graphics.hpp>
 
 class Game
@@ -8,8 +9,9 @@ class Game
 private:
     //Variables
     sf::RenderWindow* window;
-    sf::Event sfEvent;
-    Menu menu{ 1200.0f,800.0f };
+    sf::Event e;
+    Menu menu;
+    DifficultyMenu diffMenu;
 
     //private functions
 
@@ -17,7 +19,7 @@ private:
     void initVariables();
 public:
 
-    //konstruktor/destruktor
+    //constructor / destructor
     Game();
     virtual ~Game();
 
@@ -25,7 +27,11 @@ public:
     void run();
 
     bool isMenuOpen;
+    bool isDiffMenuOpen;
+    bool isGameRunning;
     void updateSFMLEvents();
+    void renderMenu();
+    void renderGame();
     void update();
     void render();
 };
