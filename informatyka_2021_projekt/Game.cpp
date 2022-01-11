@@ -7,6 +7,7 @@ void Game::initWindow()
 {
     this->window = new sf::RenderWindow(sf::VideoMode(1200, 800), "Spaceship invasion", sf::Style::Close | sf::Style::Titlebar);
     this->window->setFramerateLimit(60);
+    this->window->setVerticalSyncEnabled(false);
 }
 
 void Game::initVariables()
@@ -16,15 +17,41 @@ void Game::initVariables()
     this->isGameRunning = false;
 }
 
+void Game::initPlayer()
+{
+    this->player = new Player();
+}
+
+void Game::initTexture()
+{
+    this->textures["BULLET"] = new sf::Texture();
+    this->textures["BULLET"]->loadFromFile("Textures/bullet.png");
+}
+
 Game::Game()
 {
     this->initVariables();
     this->initWindow();
+    this->initTexture();
+    this->initPlayer();
 }
 
 Game::~Game()
 {
     delete this->window;
+    delete this->player;
+
+    //Delete textures
+    for (auto &i : this->textures)
+    {
+        delete i.second;
+    }
+    
+    //Delete Bullets
+    for (auto *i : this->bullets) 
+    {
+        delete i;
+    }
 }
 
 void Game::run()
@@ -82,12 +109,12 @@ void Game::updateSFMLEvents()
                     switch (menu.GetPressedItem())
                     {
                     case 0:
-                        std::cout << "Play button has been pressed" << std::endl;
+                        std::cout << "Play" << std::endl;
                         isDiffMenuOpen = true;
                         isMenuOpen = false;
                         break;
                     case 1:
-                        std::cout << "Option button has been pressed" << std::endl;
+                        std::cout << "Help" << std::endl;
                         isMenuOpen = false;
                         break;
                     case 2:
@@ -119,6 +146,42 @@ void Game::updateSFMLEvents()
     }
 }
 
+void Game::updateGame()
+{
+    if (isGameRunning) {
+        // Move player
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+            this->player->move(-1.f, 0.f);
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+            this->player->move(1.f, 0.f);
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+            this->player->move(0.f, -1.f);
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+            this->player->move(0.f, 1.f);
+
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+        {
+            this->bullets.push_back(new Bullet(this->textures["BULLET"], 544.f, 347.5f, 0.f, -1.f, 10.f));
+        }
+    }
+
+}
+
+void Game::updateBulets()
+{
+    for (auto* bullet : this->bullets) {
+        bullet->update();
+    }
+}
+
+
+void Game::update()
+{
+    this->updateSFMLEvents();
+    this->updateGame();
+    this->updateBulets();
+}
+
 void Game::renderMenu()
 {
     //Draw Menu
@@ -129,41 +192,35 @@ void Game::renderMenu()
     else if (menu.GetPressedItem() == 0 && isDiffMenuOpen) {
         this->diffMenu.draw(*this->window);
     }
-    //Draw option
+    //Draw help
     else if (menu.GetPressedItem() == 1) {
         sf::RectangleShape shape;
         shape.setSize(sf::Vector2f(100.f, 100.f));
         shape.setFillColor(sf::Color::Green);
         this->window->draw(shape);
-    } 
+    }
 }
 
 void Game::renderGame()
 {
     //Easy
     if (isGameRunning && diffMenu.GetPressedItem() == 0) {
-        std::cout << "Easy" << "\n";
-        sf::RectangleShape shape;
-        shape.setSize(sf::Vector2f(100.f, 100.f));
-        shape.setFillColor(sf::Color::Red);
-        this->window->draw(shape);
+        this->player->render(*this->window);
+
+        for (auto* bullet : this->bullets) {
+            bullet->render(this->window);
+        }
     }
 
     //Hard
     if (isGameRunning && diffMenu.GetPressedItem() == 1) {
-        std::cout << "Hard" << "\n";
-        sf::RectangleShape shape;
-        shape.setSize(sf::Vector2f(100.f, 100.f));
-        shape.setFillColor(sf::Color::Yellow);
-        this->window->draw(shape);
+        this->player->render(*this->window);
+
+        for (auto* bullet : this->bullets) {
+            bullet->render(this->window);
+        }
     }
 }
-
-void Game::update()
-{
-    this->updateSFMLEvents();
-}
-
 
 void Game::render()
 {
