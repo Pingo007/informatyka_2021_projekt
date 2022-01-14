@@ -30,7 +30,7 @@ DifficultyMenu::DifficultyMenu()
 {
 	initVariables();
 	initFont();
-	initGui(1200, 800);
+	initGui(600, 800);
 }
 
 DifficultyMenu::~DifficultyMenu()

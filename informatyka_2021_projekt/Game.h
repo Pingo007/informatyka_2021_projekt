@@ -2,32 +2,36 @@
 
 #include "Menu.h"
 #include "DifficultyMenu.h"
-#include "Player.h"
-#include "Bullet.h"
-#include<map>
+#include "Bird.h"
+#include "Spikes.h"
+#include "Gui.h"
 
 class Game
 {
 private:
     //Variables
     sf::RenderWindow* window;
-    sf::Event e;
+    sf::Event e;;
     Menu menu;
     DifficultyMenu diffMenu;
+    int help;
+    int help2;
 
-    //Resources
-    std::map<std::string, sf::Texture*> textures;
-    std::vector<Bullet*> bullets;
+    //Resources 
 
     //Player
-    Player* player;
+    Bird* bird;
+    //Spikes
+    Spikes* spikes;
+    //Gui
+    Gui* gui;
 
     //private functions
 
     void initWindow();
-    void initTexture();
     void initVariables();
-    void initPlayer();
+    void initGame();
+    void deleteGame();
 
 public:
 
@@ -39,6 +43,10 @@ public:
     bool isMenuOpen;
     bool isDiffMenuOpen;
     bool isGameRunning;
+    bool isGamePaused;
+    bool isGameOver;
+    bool easy;
+    bool isEsc;
 
     //functions
     void run();
@@ -47,8 +55,7 @@ public:
 
     void renderMenu();
     void renderGame();
-    void updateGame();
-    void updateBulets();
+    void updateBird();
 
     void update();
     void render();

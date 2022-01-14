@@ -5,7 +5,7 @@
 
 void Game::initWindow()
 {
-    this->window = new sf::RenderWindow(sf::VideoMode(1200, 800), "Spaceship invasion", sf::Style::Close | sf::Style::Titlebar);
+    this->window = new sf::RenderWindow(sf::VideoMode(600, 800), "Spaceship invasion", sf::Style::Close | sf::Style::Titlebar);
     this->window->setFramerateLimit(60);
     this->window->setVerticalSyncEnabled(false);
 }
@@ -15,43 +15,36 @@ void Game::initVariables()
     this->isMenuOpen = true;
     this->isDiffMenuOpen = false;
     this->isGameRunning = false;
+    this->isGamePaused = false;
+    this->isGameOver = false;
+    this->help = 0;
+    this->help2 = 0;
+    this->isEsc = false;
 }
 
-void Game::initPlayer()
+void Game::initGame()
 {
-    this->player = new Player();
+    this->bird = new Bird();
+    this->spikes = new Spikes();
+    this->gui = new Gui();
 }
 
-void Game::initTexture()
+void Game::deleteGame()
 {
-    this->textures["BULLET"] = new sf::Texture();
-    this->textures["BULLET"]->loadFromFile("Textures/bullet.png");
+    delete this->bird;
+    delete this->spikes;
+    delete this->gui;
 }
 
 Game::Game()
 {
     this->initVariables();
     this->initWindow();
-    this->initTexture();
-    this->initPlayer();
 }
 
 Game::~Game()
 {
     delete this->window;
-    delete this->player;
-
-    //Delete textures
-    for (auto &i : this->textures)
-    {
-        delete i.second;
-    }
-    
-    //Delete Bullets
-    for (auto *i : this->bullets) 
-    {
-        delete i;
-    }
 }
 
 void Game::run()
@@ -67,7 +60,6 @@ void Game::updateSFMLEvents()
 {
     while (this->window->pollEvent(this->e))
     {
-        //this->menuControl();
         switch (this->e.type) {
         case sf::Event::Closed:
             this->window->close();
@@ -75,6 +67,22 @@ void Game::updateSFMLEvents()
         case sf::Event::KeyReleased:
             switch (e.key.code)
             {
+            //Pauzowanie
+            case sf::Keyboard::F1:
+                if (isGameRunning && !isGameOver &&!isEsc)
+                {
+                    if (help == 0) {
+                        std::cout << "Paused" << "\n";
+                        isGamePaused = true;
+                        help++;
+                    }
+                    else {
+                        std::cout << "Resumed" << "\n";
+                        isGamePaused = false;
+                        help = 0;
+                    }
+                }
+                break;
             case sf::Keyboard::Up:
                 if (isMenuOpen)
                     menu.MoveUp();
@@ -92,11 +100,32 @@ void Game::updateSFMLEvents()
                 break;
 
             case sf::Keyboard::Escape:
-                if (isGameRunning) {
+                if (isGameRunning && !isGameOver &&!isGamePaused) 
+                {
+                    if (help2 == 0) {
+                        std::cout << "isEsc true" << "\n";
+                        isEsc = true;
+                        help2++;
+                    }
+                    else {
+                        std::cout << "isEsc false" << "\n";
+                        isEsc = false;
+                        help2 = 0;
+                    }
+                }
+
+                if (isGameRunning && isGameOver)
+                {
+                    std::cout << "kurwa test" << "\n";
+                    deleteGame();
+                    help = 0;
+                    isGameOver = false;
+                    isGamePaused = false;
                     isGameRunning = false;
                     isDiffMenuOpen = true;
                 }
-                else {
+                else if(!isGameRunning) 
+                {
                     isDiffMenuOpen = false;
                     isMenuOpen = true;
                     isGameRunning = false;
@@ -124,21 +153,40 @@ void Game::updateSFMLEvents()
                     break;
                 }
                 //Diff Menu klikanie enter
-                else if (!isGameRunning && !isMenuOpen && menu.GetPressedItem() == 0) {
+                else if (!isGameRunning && !isMenuOpen && menu.GetPressedItem() == 0 &&!isEsc) {
                     switch (diffMenu.GetPressedItem())
                     {
                     case 0:
+                        this->initGame();
                         std::cout << "Easy" << std::endl;
                         isDiffMenuOpen = false;
                         isGameRunning = true;
+                        easy = true;
                         break;
                     case 1:
                         std::cout << "Hard" << std::endl;
+                        this->initGame();
                         isDiffMenuOpen = false;
                         isGameRunning = true;
+                        easy = false;
                         break;
                     }
                     break;
+                }
+                if (isEsc)
+                {
+                    if (isGameRunning)
+                    {
+                        std::cout << "kurwa test" << "\n";
+                        deleteGame();
+                        help = 0;
+                        isGameOver = false;
+                        isGamePaused = false;
+                        isGameRunning = false;
+                        isDiffMenuOpen = true;
+                        isEsc = false;
+                        help2 = 0;
+                    }
                 }
             }
             break;
@@ -146,40 +194,29 @@ void Game::updateSFMLEvents()
     }
 }
 
-void Game::updateGame()
+void Game::updateBird()
 {
-    if (isGameRunning) {
-        // Move player
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-            this->player->move(-1.f, 0.f);
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-            this->player->move(1.f, 0.f);
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-            this->player->move(0.f, -1.f);
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-            this->player->move(0.f, 1.f);
-
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+    if (isGameRunning && !isGamePaused && !isGameOver && !isEsc) {
+        //std::cout << bird->getPoints() << "\n";
+        this->bird->Animate();
+        this->bird->Update();
+        this->spikes->updateSpikes(this->bird->bounce, easy);
+        this->gui->updatePoints(this->bird->getPoints());
+        if (this->spikes->checkCollisions(bird->getHitbox()))
         {
-            this->bullets.push_back(new Bullet(this->textures["BULLET"], 544.f, 347.5f, 0.f, -1.f, 10.f));
+            this->isGameOver = true;
+            std::cout << "GameOver" << "\n";
+        }
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            this->bird->Tap();
         }
     }
-
 }
-
-void Game::updateBulets()
-{
-    for (auto* bullet : this->bullets) {
-        bullet->update();
-    }
-}
-
 
 void Game::update()
 {
     this->updateSFMLEvents();
-    this->updateGame();
-    this->updateBulets();
+    this->updateBird();
 }
 
 void Game::renderMenu()
@@ -204,21 +241,35 @@ void Game::renderMenu()
 void Game::renderGame()
 {
     //Easy
-    if (isGameRunning && diffMenu.GetPressedItem() == 0) {
-        this->player->render(*this->window);
+    if (isGameRunning && diffMenu.GetPressedItem() == 0) 
+    {
+        this->bird->Draw(*this->window);
+        this->spikes->drawSpikes(*this->window);
+        this->gui->guiDraw(*this->window);
+        if (isGamePaused)
+            this->gui->pauseDraw(*this->window);
 
-        for (auto* bullet : this->bullets) {
-            bullet->render(this->window);
-        }
+        if (isGameOver)
+            this->gui->gameOverDraw(*this->window);
+
+        if (isEsc)
+            this->gui->drawEsc(*this->window);
     }
 
     //Hard
-    if (isGameRunning && diffMenu.GetPressedItem() == 1) {
-        this->player->render(*this->window);
+    if (isGameRunning && diffMenu.GetPressedItem() == 1) 
+    {
+        this->bird->Draw(*this->window);
+        this->spikes->drawSpikes(*this->window);
+        this->gui->guiDraw(*this->window);
+        if (isGamePaused)
+            this->gui->pauseDraw(*this->window);
 
-        for (auto* bullet : this->bullets) {
-            bullet->render(this->window);
-        }
+        if (isGameOver)
+            this->gui->gameOverDraw(*this->window);
+
+        if (isEsc)
+            this->gui->drawEsc(*this->window);
     }
 }
 
@@ -228,6 +279,7 @@ void Game::render()
     //rendering
     this->renderMenu();
     this->renderGame();
+   
 
     this->window->display();
 }

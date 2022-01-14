@@ -35,7 +35,7 @@ Menu::Menu()
 {
 	initVariables();
 	initFont();
-	initGui(1200,800);
+	initGui(600,800);
 }
 
 Menu::~Menu()
