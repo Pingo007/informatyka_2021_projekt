@@ -25,7 +25,7 @@ void Gui::initText()
 
 	this->text[1].Bold;
 	this->text[1].setFont(font);
-	this->text[1].setString("Highscore: " + highscoreS);
+	this->text[1].setString("");
 	this->text[1].setCharacterSize(40);
 	this->text[1].setFillColor(sf::Color::White);
 	this->text[1].setPosition(540.f - text[1].getGlobalBounds().width, 60.f);
@@ -123,3 +123,48 @@ void Gui::drawEsc(sf::RenderTarget& target)
 	target.draw(this->text[5]);
 	target.draw(this->text[6]);
 }
+
+void Gui::read()
+{
+
+	std::ifstream stream = std::ifstream("results.txt", std::ios::binary);
+	stream.seekg(0, stream.end);
+	length = stream.tellg();
+	length = length / sizeof(saveStr);
+
+	if (length < N)
+	{
+		stream.seekg(0, stream.beg);
+		stream.read((char*)this->buffor, sizeof(saveStr) * length);
+	}
+	else
+	{
+		stream.seekg(sizeof(saveStr) * (length - N), stream.beg);
+		stream.read((char*)this->buffor, sizeof(saveStr) * N);
+		length = N;
+	}
+
+	stream.close();
+	for (size_t i = 0; i < N; i++)
+	{
+		this->resultsText[i].setFont(this->font);
+		this->resultsText[i].setFillColor(sf::Color::White);
+		this->resultsText[i].setPosition(sf::Vector2f(200.f, 200.0f + 100 * i));
+
+	}
+	for (size_t i = 0; i < length; i++)
+	{
+		this->resultsText[i].setString("Points: " + std::to_string(this->buffor[i].points) + " Level: " + ((this->buffor[i].level == 2) ? "Hard" : "Easy"));
+	}
+	std::cout << "read " << "len: " << length << "\n";
+}
+
+void Gui::drawLast(sf::RenderTarget* target)
+{
+	for (size_t i = 0; i < length; i++)
+	{
+		target->draw(this->resultsText[i]);
+	}
+}
+
+

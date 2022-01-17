@@ -3,6 +3,7 @@
 #include "Menu.h"
 #include "DifficultyMenu.h"
 
+
 void Game::initWindow()
 {
     this->window = new sf::RenderWindow(sf::VideoMode(600, 800), "Spaceship invasion", sf::Style::Close | sf::Style::Titlebar);
@@ -20,31 +21,51 @@ void Game::initVariables()
     this->help = 0;
     this->help2 = 0;
     this->isEsc = false;
+    this->flag = false;
 }
 
 void Game::initGame()
 {
     this->bird = new Bird();
     this->spikes = new Spikes();
-    this->gui = new Gui();
 }
 
 void Game::deleteGame()
 {
     delete this->bird;
     delete this->spikes;
-    delete this->gui;
+    //delete this->gui;
+}
+
+void Game::save()
+{
+    saveStr buffor = { 0 };
+    buffor.points = bird->getPoints();
+    if (easy) 
+    {
+        buffor.level = 1;
+    }
+    else 
+    {
+        buffor.level = 2;
+    }
+    std::ofstream stream;
+    stream.open("results.txt", std::ios::app | std::ios::binary);
+    stream.write((const char*)&buffor, sizeof(buffor));
+    stream.close();
 }
 
 Game::Game()
 {
     this->initVariables();
     this->initWindow();
+    this->gui = new Gui();
 }
 
 Game::~Game()
 {
     delete this->window;
+    delete this->gui;
 }
 
 void Game::run()
@@ -116,9 +137,9 @@ void Game::updateSFMLEvents()
 
                 if (isGameRunning && isGameOver)
                 {
-                    std::cout << "kurwa test" << "\n";
                     deleteGame();
                     help = 0;
+                    flag = false;
                     isGameOver = false;
                     isGamePaused = false;
                     isGameRunning = false;
@@ -144,6 +165,7 @@ void Game::updateSFMLEvents()
                         break;
                     case 1:
                         std::cout << "Help" << std::endl;
+                        gui->read();
                         isMenuOpen = false;
                         break;
                     case 2:
@@ -177,7 +199,7 @@ void Game::updateSFMLEvents()
                 {
                     if (isGameRunning)
                     {
-                        std::cout << "kurwa test" << "\n";
+                        std::cout << "test" << "\n";
                         deleteGame();
                         help = 0;
                         isGameOver = false;
@@ -197,7 +219,6 @@ void Game::updateSFMLEvents()
 void Game::updateBird()
 {
     if (isGameRunning && !isGamePaused && !isGameOver && !isEsc) {
-        //std::cout << bird->getPoints() << "\n";
         this->bird->Animate();
         this->bird->Update();
         this->spikes->updateSpikes(this->bird->bounce, easy);
@@ -231,11 +252,30 @@ void Game::renderMenu()
     }
     //Draw help
     else if (menu.GetPressedItem() == 1) {
-        sf::RectangleShape shape;
-        shape.setSize(sf::Vector2f(100.f, 100.f));
-        shape.setFillColor(sf::Color::Green);
-        this->window->draw(shape);
+        this->gui->drawLast(window);
     }
+}
+
+void Game::drawGame()
+{
+    this->bird->Draw(*this->window);
+    this->spikes->drawSpikes(*this->window);
+    this->gui->guiDraw(*this->window);
+    if (isGamePaused)
+        this->gui->pauseDraw(*this->window);
+
+    if (isGameOver) {
+        this->gui->gameOverDraw(*this->window);
+        if (!flag)
+        {
+            std::cout << "Saved" << "\n";
+            this->save();
+            flag = true;
+        }
+    }
+
+    if (isEsc)
+        this->gui->drawEsc(*this->window);
 }
 
 void Game::renderGame()
@@ -243,33 +283,13 @@ void Game::renderGame()
     //Easy
     if (isGameRunning && diffMenu.GetPressedItem() == 0) 
     {
-        this->bird->Draw(*this->window);
-        this->spikes->drawSpikes(*this->window);
-        this->gui->guiDraw(*this->window);
-        if (isGamePaused)
-            this->gui->pauseDraw(*this->window);
-
-        if (isGameOver)
-            this->gui->gameOverDraw(*this->window);
-
-        if (isEsc)
-            this->gui->drawEsc(*this->window);
+        drawGame();
     }
 
     //Hard
     if (isGameRunning && diffMenu.GetPressedItem() == 1) 
     {
-        this->bird->Draw(*this->window);
-        this->spikes->drawSpikes(*this->window);
-        this->gui->guiDraw(*this->window);
-        if (isGamePaused)
-            this->gui->pauseDraw(*this->window);
-
-        if (isGameOver)
-            this->gui->gameOverDraw(*this->window);
-
-        if (isEsc)
-            this->gui->drawEsc(*this->window);
+        drawGame();
     }
 }
 

@@ -5,6 +5,8 @@
 #include "Bird.h"
 #include "Spikes.h"
 #include "Gui.h"
+#include <fstream>
+
 
 class Game
 {
@@ -47,15 +49,19 @@ public:
     bool isGameOver;
     bool easy;
     bool isEsc;
+    bool flag;
 
     //functions
     void run();
+
+    void save();
 
     void updateSFMLEvents();
 
     void renderMenu();
     void renderGame();
     void updateBird();
+    void drawGame();
 
     void update();
     void render();
